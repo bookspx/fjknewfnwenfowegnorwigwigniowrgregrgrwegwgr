@@ -19,15 +19,18 @@ jobs:
     - name: Install Streaming Engine & YouTube Downloader
       run: |
         sudo apt-get update
-        sudo apt-get install ffmpeg python3-pip -y
-        sudo wget https://github.com -O /usr/local/bin/yt-dlp
-        sudo chmod a+rx /usr/local/bin/yt-dlp
+        sudo apt-get install ffmpeg python3-pip python3-venv -y
+        # FIXED: Using secure python environment to safely install yt-dlp
+        python3 -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install yt-dlp
 
     - name: Stream Directly From YouTube to Shopee
       run: |
-        # CONFIGURED WITH YOUR PROVIDED LINK
-        YOUTUBE_LINK="https://youtu.be/8I-__ecBSxY"
+        source venv/bin/activate
+        YOUTUBE_LINK="https://www.youtube.com/watch?v=8I-__ecBSxY"
         
-        # BYPASSES EXIT CODE 183 ERRORS USING SECURITY AND CERTIFICATE IGNORES
+        # Streams directly from YouTube straight into FFmpeg data pipeline
         yt-dlp --no-check-certificates --no-warnings -f "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]" -o - "$YOUTUBE_LINK" | \
         ffmpeg -i pipe:0 -re -stream_loop -1 -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 5000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 128k -ar 44100 -f flv "${{ github.event.inputs.shopee_url }}/${{ github.event.inputs.shopee_key }}"
