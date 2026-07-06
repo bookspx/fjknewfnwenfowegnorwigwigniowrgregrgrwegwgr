@@ -1,16 +1,16 @@
-name: Shopee Cloud Live Stream (Google Drive)
+name: XX
 
 on:
   workflow_dispatch:
     inputs:
       google_drive_file_id:
-        description: 'Paste Google Drive File ID'
+        description: 'GG'
         required: true
       shopee_url:
-        description: 'Paste Shopee RTMP URL'
+        description: 'RMTP'
         required: true
       shopee_key:
-        description: 'Paste Shopee Stream Key'
+        description: 'KK'
         required: true
 
 jobs:
@@ -28,9 +28,8 @@ jobs:
           python3 -m pip install --user gdown
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Download Video From Google Drive
+      - name: DLP
         run: |
-          echo "Downloading video from Google Drive..."
 
           gdown "https://drive.google.com/uc?id=${{ github.event.inputs.google_drive_file_id }}" -O live_video.mp4
 
@@ -39,22 +38,19 @@ jobs:
           ls -lh live_video.mp4
           file live_video.mp4
 
-      - name: Verify Video File
+      - name: VV
         run: |
-          echo "Checking if file is a valid video..."
 
           ffprobe -v error -show_format -show_streams live_video.mp4
 
           echo "Video verification successful."
 
-      - name: Stream File to Shopee
+      - name: SPX
         run: |
-          echo "Starting Shopee live stream..."
 
           RTMP_URL="${{ github.event.inputs.shopee_url }}"
           RTMP_KEY="${{ github.event.inputs.shopee_key }}"
 
-          # Remove trailing slash if user pasted one
           RTMP_URL="${RTMP_URL%/}"
 
           ffmpeg -re -stream_loop -1 -i live_video.mp4 \
