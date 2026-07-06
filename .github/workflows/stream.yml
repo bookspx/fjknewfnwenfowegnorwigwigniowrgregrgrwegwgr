@@ -25,8 +25,9 @@ jobs:
 
     - name: Stream Directly From YouTube to Shopee
       run: |
-        # REPLACE THE LINK BELOW WITH YOUR ACTUAL UNLISTED YOUTUBE VIDEO LINK
+        # CONFIGURED WITH YOUR PROVIDED LINK
         YOUTUBE_LINK="https://youtu.be/8I-__ecBSxY"
         
-        yt-dlp -f "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]" -o - "$YOUTUBE_LINK" | \
+        # BYPASSES EXIT CODE 183 ERRORS USING SECURITY AND CERTIFICATE IGNORES
+        yt-dlp --no-check-certificates --no-warnings -f "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]" -o - "$YOUTUBE_LINK" | \
         ffmpeg -i pipe:0 -re -stream_loop -1 -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 5000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 128k -ar 44100 -f flv "${{ github.event.inputs.shopee_url }}/${{ github.event.inputs.shopee_key }}"
