@@ -1,0 +1,32 @@
+name: Shopee Cloud Live Stream (YouTube Feed)
+on:
+  workflow_dispatch:
+    inputs:
+      shopee_url:
+        description: 'Paste Shopee RTMP URL'
+        required: true
+      shopee_key:
+        description: 'Paste Shopee Stream Key'
+        required: true
+
+jobs:
+  live_stream:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Install Streaming Engine & YouTube Downloader
+      run: |
+        sudo apt-get update
+        sudo apt-get install ffmpeg python3-pip -y
+        sudo wget https://github.com -O /usr/local/bin/yt-dlp
+        sudo chmod a+rx /usr/local/bin/yt-dlp
+
+    - name: Stream Directly From YouTube to Shopee
+      run: |
+        # REPLACE THE LINK BELOW WITH YOUR ACTUAL UNLISTED YOUTUBE VIDEO LINK
+        YOUTUBE_LINK="https://youtu.be/8I-__ecBSxY"
+        
+        yt-dlp -f "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]" -o - "$YOUTUBE_LINK" | \
+        ffmpeg -i pipe:0 -re -stream_loop -1 -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 5000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 128k -ar 44100 -f flv "${{ github.event.inputs.shopee_url }}/${{ github.event.inputs.shopee_key }}"
