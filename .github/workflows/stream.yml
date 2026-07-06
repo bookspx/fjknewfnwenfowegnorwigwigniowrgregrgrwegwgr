@@ -23,11 +23,8 @@ jobs:
 
     - name: Download From Google Drive
       run: |
-        # PRE-CONFIGURED WITH YOUR EXACT GOOGLE DRIVE ID
-        FILE_ID="1kbXf1FlPUxmT3FZgRXDrTU42n_cuvxzm"
-        
-        # Bypasses the web layout and pulls the video straight into the server cache
-        aria2c -x 16 -s 16 -k 1M --check-certificate=false "https://google.com{FILE_ID}" -o live_video.mp4
+        # FIXED: Direct link with your exact File ID hardcoded cleanly into the downloader
+        aria2c -x 16 -s 16 -k 1M --check-certificate=false "https://google.com" -o live_video.mp4
 
     - name: Stream File to Shopee
       run: |
