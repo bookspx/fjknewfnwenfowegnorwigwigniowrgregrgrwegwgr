@@ -1,4 +1,4 @@
-name: Shopee Cloud Live Stream (YouTube Feed)
+name: Shopee Cloud Live Stream (Google Drive)
 on:
   workflow_dispatch:
     inputs:
@@ -16,23 +16,20 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Install Streaming Engine & YouTube Downloader
+    - name: Install Streaming Engine
       run: |
         sudo apt-get update
-        # FIXED: Added -y to the end of the installation line to stop it from freezing
-        sudo apt-get install ffmpeg python3-pip python3-venv -y
-        
-        # Setting up a clean python environment to securely install yt-dlp
-        python3 -m venv venv
-        source venv/bin/activate
-        pip install --upgrade pip
-        pip install yt-dlp
+        sudo apt-get install ffmpeg aria2 -y
 
-    - name: Stream Directly From YouTube to Shopee
+    - name: Download From Google Drive
       run: |
-        source venv/bin/activate
-        YOUTUBE_LINK="https://www.youtube.com/watch?v=8I-__ecBSxY"
+        # PRE-CONFIGURED WITH YOUR EXACT GOOGLE DRIVE ID
+        FILE_ID="1kbXf1FlPUxmT3FZgRXDrTU42n_cuvxzm"
         
-        # Streams directly from YouTube straight into the FFmpeg data pipeline
-        yt-dlp --no-check-certificates --no-warnings -f "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]" -o - "$YOUTUBE_LINK" | \
-        ffmpeg -i pipe:0 -re -stream_loop -1 -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 5000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 128k -ar 44100 -f flv "${{ github.event.inputs.shopee_url }}/${{ github.event.inputs.shopee_key }}"
+        # Bypasses the web layout and pulls the video straight into the server cache
+        aria2c -x 16 -s 16 -k 1M --check-certificate=false "https://google.com{FILE_ID}" -o live_video.mp4
+
+    - name: Stream File to Shopee
+      run: |
+        # Streams your 4-hour video smoothly on an infinite loop to Shopee
+        ffmpeg -re -stream_loop -1 -i live_video.mp4 -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 5000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 128k -ar 44100 -f flv "${{ github.event.inputs.shopee_url }}/${{ github.event.inputs.shopee_key }}"
