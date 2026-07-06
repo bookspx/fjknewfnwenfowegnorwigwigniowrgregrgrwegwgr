@@ -1,7 +1,11 @@
 name: Shopee Cloud Live Stream (Google Drive)
+
 on:
   workflow_dispatch:
     inputs:
+      google_drive_file_id:
+        description: 'Paste Google Drive File ID'
+        required: true
       shopee_url:
         description: 'Paste Shopee RTMP URL'
         required: true
@@ -12,21 +16,56 @@ on:
 jobs:
   live_stream:
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Install Streaming Engine
-      run: |
-        sudo apt-get update
-        sudo apt-get install ffmpeg aria2 -y
+      - name: Install Streaming Engine
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg python3-pip
+          python3 -m pip install --user gdown
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - name: Download From Google Drive
-      run: |
-        # FIXED: Direct link with your exact File ID hardcoded cleanly into the downloader
-        aria2c -x 16 -s 16 -k 1M --check-certificate=false "https://google.com" -o live_video.mp4
+      - name: Download Video From Google Drive
+        run: |
+          echo "Downloading video from Google Drive..."
 
-    - name: Stream File to Shopee
-      run: |
-        # Streams your 4-hour video smoothly on an infinite loop to Shopee
-        ffmpeg -re -stream_loop -1 -i live_video.mp4 -c:v libx264 -preset veryfast -b:v 2500k -maxrate 2500k -bufsize 5000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 128k -ar 44100 -f flv "${{ github.event.inputs.shopee_url }}/${{ github.event.inputs.shopee_key }}"
+          gdown "https://drive.google.com/uc?id=${{ github.event.inputs.google_drive_file_id }}" -O live_video.mp4
+
+          echo "Download completed."
+          echo "File information:"
+          ls -lh live_video.mp4
+          file live_video.mp4
+
+      - name: Verify Video File
+        run: |
+          echo "Checking if file is a valid video..."
+
+          ffprobe -v error -show_format -show_streams live_video.mp4
+
+          echo "Video verification successful."
+
+      - name: Stream File to Shopee
+        run: |
+          echo "Starting Shopee live stream..."
+
+          RTMP_URL="${{ github.event.inputs.shopee_url }}"
+          RTMP_KEY="${{ github.event.inputs.shopee_key }}"
+
+          # Remove trailing slash if user pasted one
+          RTMP_URL="${RTMP_URL%/}"
+
+          ffmpeg -re -stream_loop -1 -i live_video.mp4 \
+            -c:v libx264 \
+            -preset veryfast \
+            -b:v 2500k \
+            -maxrate 2500k \
+            -bufsize 5000k \
+            -pix_fmt yuv420p \
+            -g 50 \
+            -c:a aac \
+            -b:a 128k \
+            -ar 44100 \
+            -f flv "$RTMP_URL/$RTMP_KEY"
